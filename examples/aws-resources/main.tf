@@ -32,8 +32,8 @@ resource "time_rotating" "this" { rotation_minutes = 5 }
 resource "docker_image" "this" {
 	# Generate an image name that Docker will publish to our ECR instance like:
 	# 123456789.dkr.ecr.ca-central-1.amazonaws.com/abcdefghijk:2023-03-21T12-34-56
-	# [123456789.dkr.ecr.ca-central-1.amazonaws.com]/[abcdefghijk]:[2023-03-21T12-34-56]
-	# [%v]/[%v]:[%v]
+	# {{123456789.dkr.ecr.ca-central-1.amazonaws.com}}/{{abcdefghijk}}:{{2023-03-21T12-34-56}}
+	# {{%v}}/{{%v}}:{{%v}}
 	name = format("%v/%v:%v", local.ecr_address, resource.aws_ecr_repository.this.id, formatdate("YYYY-MM-DD'T'hh-mm-ss", resource.time_rotating.this.id))
 
 	build { context = "." }
