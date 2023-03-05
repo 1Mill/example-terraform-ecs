@@ -250,4 +250,4 @@ resource "aws_ecs_service" "this" {
 
 # * Output the URL of our Application Load Balancer so that we can connect to
 # * it once we get our ECS Service up and running.
-output "alb_url" { value = "http://${resource.aws_lb.this.dns_name}" }
+output "lb_url" { value = "http://${resource.aws_lb.this.dns_name}" }
