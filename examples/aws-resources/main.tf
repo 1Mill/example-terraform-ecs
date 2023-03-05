@@ -95,11 +95,15 @@ resource "aws_security_group" "ingress_api" {
 	}
 }
 
-# * Available AWS Availability Zones that we will route our connections through
+# * Available AWS Availability Zones that we will route our connections through.
 data "aws_availability_zones" "available" { state = "available" }
 
-# * Create public subnetworks (Public Subnet) so that our future ECS Service can accept connections
+# * Create an Internet Gateway so that resources running inside our VPC can
+# * connect to the internet.
 resource "aws_internet_gateway" "this" { vpc_id = resource.aws_vpc.this.id }
+
+# * Create public subnetworks (Public Subnet) so that resources inside our
+# * VPC can use these Public Subnets to fetch data from the internet.
 resource "aws_route_table" "public" { vpc_id = resource.aws_vpc.this.id }
 resource "aws_route" "public" {
 	destination_cidr_block = "0.0.0.0/0"
@@ -119,4 +123,16 @@ resource "aws_route_table_association" "public" {
 
 	route_table_id = resource.aws_route_table.public.id
 	subnet_id = each.value
+}
+
+# * Eventually we will make a private subnetwork (Private Subnet) that will
+# * need to connect to external websites. To do this, we must create a NAT
+# * Gateway that will route external website requests from our Private
+# * Subnet through our Public Subnet.
+resource "aws_eip" "this" { vpc = true }
+resource "aws_nat_gateway" "this" {
+	allocation_id = resource.aws_eip.this.id
+	subnet_id = resource.aws_subnet.public[0].id # Just route all requests through one of our Public Subnets.
+
+	depends_on = [resource.aws_internet_gateway.this]
 }
