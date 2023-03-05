@@ -97,3 +97,26 @@ resource "aws_security_group" "ingress_api" {
 
 # * Available AWS Availability Zones that we will route our connections through
 data "aws_availability_zones" "available" { state = "available" }
+
+# * Create public subnetworks (Public Subnet) so that our future ECS Service can accept connections
+resource "aws_internet_gateway" "this" { vpc_id = resource.aws_vpc.this.id }
+resource "aws_route_table" "public" { vpc_id = resource.aws_vpc.this.id }
+resource "aws_route" "public" {
+	destination_cidr_block = "0.0.0.0/0"
+	gateway_id = resource.aws_internet_gateway.this.id
+	route_table_id = resource.aws_route_table.public.id
+}
+resource "aws_subnet" "public" {
+	count = 2
+
+	availability_zone = data.aws_availability_zones.available.names[count.index]
+	cidr_block = cidrsubnet(resource.aws_vpc.this.cidr_block, 8, count.index)
+	vpc_id = resource.aws_vpc.this.id
+}
+resource "aws_route_table_association" "public" {
+	# https://github.com/hashicorp/terraform/issues/22476#issuecomment-547689853
+	for_each = { for k, v in resource.aws_subnet.public : k => v.id }
+
+	route_table_id = resource.aws_route_table.public.id
+	subnet_id = each.value
+}
