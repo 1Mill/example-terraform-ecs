@@ -23,8 +23,26 @@ provider "docker" {
 	}
 }
 
-# * Create ECR Repository that we will push our Docker image to
+# * Create ECR Repository: later we will push our Docker image to this Repository
 resource "aws_ecr_repository" "this" {
 	image_tag_mutability = "MUTABLE"
 	name = local.example
+}
+
+# * Build our Docker image
+resource "docker_image" "this" {
+	# Generate an image name that Docker will publish to our ECR instance like:
+	# 123456789.dkr.ecr.ca-central-1.amazonaws.com/abcdefghijk:2023-03-21T12-34-56
+	# [123456789.dkr.ecr.ca-central-1.amazonaws.com]/[abcdefghijk]:[2023-03-21T12-34-56]
+	# [%v]/[%v]:[%v]
+	name = format("%v/%v:%v", local.ecr_address, resource.aws_ecr_repository.this.id, formatdate("YYYY-MM-DD'T'hh-mm-ss", timestamp()))
+
+	build {
+		context = "."
+	}
+}
+
+# * Push our Docker image to our AWS ECR
+resource "docker_registry_image" "this" {
+	name = resource.docker_image.this.name
 }
