@@ -21,13 +21,13 @@ provider "docker" {
 	}
 }
 
-# * Create ECR Repository: later we will push our Docker image to this Repository
+# * Create an ECR Repository: later we will push our Docker Image to this Repository
 resource "aws_ecr_repository" "this" {
 	image_tag_mutability = "MUTABLE"
 	name = local.example
 }
 
-# * Build our Docker image that generates a new tag every 5 minutes
+# * Build our Docker Image that generates a new tag every 5 minutes
 resource "time_rotating" "this" { rotation_minutes = 5 }
 resource "docker_image" "this" {
 	# Generate an image name that Docker will publish to our ECR instance like:
@@ -39,5 +39,5 @@ resource "docker_image" "this" {
 	build { context = "." }
 }
 
-# * Push our Docker image to our AWS ECR Repository
+# * Push our Image to our Repository
 resource "docker_registry_image" "this" { name = resource.docker_image.this.name }
