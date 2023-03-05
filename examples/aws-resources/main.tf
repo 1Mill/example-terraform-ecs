@@ -16,9 +16,11 @@ data "aws_ecr_authorization_token" "this" {}
 data "aws_region" "this" {}
 provider "docker" {
 	registry_auth {
-		address  = format("%v.dkr.ecr.%v.amazonaws.com", data.aws_caller_identity.this.account_id, data.aws_region.current.name)
-		password = data.aws_ecr_authorization_token.token.password
-		username = data.aws_ecr_authorization_token.token.user_name
+		address  = format("%v.dkr.ecr.%v.amazonaws.com", data.aws_caller_identity.this.account_id, data.aws_region.this.name)
+		password = data.aws_ecr_authorization_token.this.password
+		username = data.aws_ecr_authorization_token.this.user_name
+	}
+}
 	}
 }
 
