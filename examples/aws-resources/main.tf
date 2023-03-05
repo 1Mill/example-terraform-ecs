@@ -1,5 +1,5 @@
 # * Part 1 - Setup
-locals { example = "github-1mill-example-terraform-ecs-examples-aws-resources" }
+locals { example = "example-terraform-ecs" }
 
 provider "aws" {
 	region = "ca-central-1"
@@ -41,7 +41,7 @@ resource "docker_image" "this" {
 # * Push our Image to our Repository
 resource "docker_registry_image" "this" { name = resource.docker_image.this.name }
 
-# * Part 3 - Setting up our network
+# * Part 3 - Setting up our networks
 # * Create an AWS Virtual Private Cloud (VPC)
 resource "aws_vpc" "this" { cidr_block = "10.0.0.0/16" }
 
@@ -84,7 +84,7 @@ resource "aws_security_group" "egress_all" {
 }
 resource "aws_security_group" "ingress_api" {
 	description = "Permit some incoming traffic"
-	name = "ingress-node-express"
+	name = "ingress-esc-service"
 	vpc_id = resource.aws_vpc.this.id
 
 	ingress {
@@ -160,3 +160,45 @@ resource "aws_route_table_association" "private" {
 	route_table_id = resource.aws_route_table.public.id
 	subnet_id = each.value
 }
+
+# * Step 4 - Setting up our application load balancers to manage incoming traffic.
+# * Create an AWS Application Load Balancer that accepts HTTP requests (on
+# * port 80) and directs those requests to port 3000 on the VPC.
+resource "aws_alb" "this" {
+	internal = false
+	load_balancer_type = "application"
+	name = local.example
+
+	depends_on = [resource.aws_internet_gateway.this]
+
+	security_groups = [
+		resource.aws_security_group.egress_all.id,
+		resource.aws_security_group.http.id,
+		resource.aws_security_group.https.id,
+	]
+
+	subnets = resource.aws_subnet.public[*].id
+}
+resource "aws_lb_target_group" "this" {
+	name = local.example
+	port = 3000
+	protocol = "HTTP"
+	target_type = "ip"
+	vpc_id = resource.aws_vpc.this.id
+
+	depends_on = [resource.aws_alb.this]
+}
+resource "aws_alb_listener" "this" {
+	load_balancer_arn = resource.aws_alb.this.arn
+	port = 80
+	protocol = "HTTP"
+
+	default_action {
+		target_group_arn = aws_lb_target_group.this.arn
+		type = "forward"
+	}
+}
+
+# * Output the URL of our Application Load Balancer so that we can connect to
+# * it once we get our ECS Service up and running.
+output "alb_url" { value = "http://${resource.aws_alb.this.dns_name}" }
