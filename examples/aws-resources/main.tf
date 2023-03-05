@@ -37,9 +37,7 @@ resource "docker_image" "this" {
 	# [%v]/[%v]:[%v]
 	name = format("%v/%v:%v", local.ecr_address, resource.aws_ecr_repository.this.id, formatdate("YYYY-MM-DD'T'hh-mm-ss", timestamp()))
 
-	build {
-		context = "."
-	}
+	build { context = "." }
 }
 
 # * Push our Docker image to our AWS ECR
