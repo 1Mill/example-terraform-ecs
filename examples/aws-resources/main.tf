@@ -157,7 +157,7 @@ resource "aws_route_table_association" "private" {
 	# https://github.com/hashicorp/terraform/issues/22476#issuecomment-547689853
 	for_each = { for k, v in resource.aws_subnet.private : k => v.id }
 
-	route_table_id = resource.aws_route_table.public.id
+	route_table_id = resource.aws_route_table.private.id
 	subnet_id = each.value
 }
 
