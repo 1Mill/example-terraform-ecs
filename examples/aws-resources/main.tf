@@ -196,10 +196,6 @@ resource "aws_lb_listener" "this" {
 	}
 }
 
-# * Output the URL of our Application Load Balancer so that we can connect to
-# * it once we get our ECS Service up and running.
-output "alb_url" { value = "http://${resource.aws_lb.this.dns_name}" }
-
 # * Step 5 - Create our ECS Cluster that our future ECS Service will run inside of.
 resource "aws_ecs_cluster" "this" { name = "${local.example}-cluster" }
 resource "aws_ecs_cluster_capacity_providers" "this" {
@@ -251,3 +247,7 @@ resource "aws_ecs_service" "this" {
 		subnets = resource.aws_subnet.private[*].id
 	}
 }
+
+# * Output the URL of our Application Load Balancer so that we can connect to
+# * it once we get our ECS Service up and running.
+output "alb_url" { value = "http://${resource.aws_lb.this.dns_name}" }
