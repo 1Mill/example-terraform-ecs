@@ -38,5 +38,5 @@ resource "docker_image" "this" {
 	build { context = "." }
 }
 
-# * Push our Docker image to our AWS ECR
+# * Push our Docker image to our AWS ECR Repository
 resource "docker_registry_image" "this" { name = resource.docker_image.this.name }
