@@ -163,7 +163,7 @@ resource "aws_route_table_association" "private" {
 
 # * Step 4 - Setting up our application load balancers to manage incoming traffic.
 # * Create an AWS Application Load Balancer that accepts HTTP requests (on
-# * port 80) and directs those requests to port 3000 on the VPC.
+# * port 80) and directs those requests to port 8080 on the VPC.
 resource "aws_alb" "this" {
 	internal = false
 	load_balancer_type = "application"
@@ -181,7 +181,7 @@ resource "aws_alb" "this" {
 }
 resource "aws_lb_target_group" "this" {
 	name = local.example
-	port = 3000
+	port = 8080
 	protocol = "HTTP"
 	target_type = "ip"
 	vpc_id = resource.aws_vpc.this.id
@@ -218,7 +218,7 @@ resource "aws_ecs_task_definition" "this" {
 		essential: true,
 		image: resource.docker_registry_image.this.name,
 		name: "hello-world-container",
-		portMappings = [{ containerPort = 3000 }],
+		portMappings = [{ containerPort = 8080 }],
 	}])
 	cpu = 256
 	execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
@@ -242,7 +242,7 @@ resource "aws_ecs_service" "this" {
 
 	load_balancer {
 		container_name = "hello-world-container"
-		container_port = 3000
+		container_port = 8080
 		target_group_arn = resource.aws_lb_target_group.this.arn
 	}
 
