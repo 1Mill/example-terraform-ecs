@@ -7,5 +7,10 @@ terraform {
 			source  = "hashicorp/aws"
 			version = "~> 4.56"
 		}
+		docker = {
+			# * Version 2.18 introduces .dockerignore whitelist pattern
+			source  = "kreuzwerker/docker"
+			version = "~> 2.18"
+		}
 	}
 }
