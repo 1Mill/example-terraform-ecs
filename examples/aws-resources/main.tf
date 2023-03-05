@@ -227,3 +227,30 @@ resource "aws_ecs_task_definition" "this" {
 	network_mode = "awsvpc"
 	requires_compatibilities = ["FARGATE"]
 }
+
+# * Step 7 - Run our application.
+resource "aws_ecs_service" "this" {
+	cluster = resource.aws_ecs_cluster.this.id
+	desired_count = 1
+	launch_type = "FARGATE"
+	name = "${local.example}-service"
+	task_definition = resource.aws_ecs_task_definition.this.arn
+
+	lifecycle {
+		ignore_changes = [desired_count] # Allow external changes to happen without Terraform conflicts, particularly around auto-scaling.
+	}
+
+	load_balancer {
+		container_name = "hello-world-container"
+		container_port = 3000
+		target_group_arn = resource.aws_lb_target_group.this.arn
+	}
+
+	network_configuration {
+		security_groups = [
+			resource.aws_security_group.egress_all.id,
+			resource.aws_security_group.ingress_api.id,
+		]
+		subnets = resource.aws_subnet.private[*].id
+	}
+}
