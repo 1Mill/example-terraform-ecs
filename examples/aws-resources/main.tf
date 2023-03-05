@@ -164,10 +164,8 @@ resource "aws_route_table_association" "private" {
 # * Step 4 - Setting up our application load balancers to manage incoming traffic.
 # * Create an AWS Application Load Balancer that accepts HTTP requests (on
 # * port 80) and directs those requests to port 8080 on the VPC.
-resource "aws_alb" "this" {
-	internal = false
+resource "aws_lb" "this" {
 	load_balancer_type = "application"
-	name = local.example
 
 	depends_on = [resource.aws_internet_gateway.this]
 
@@ -180,16 +178,15 @@ resource "aws_alb" "this" {
 	subnets = resource.aws_subnet.public[*].id
 }
 resource "aws_lb_target_group" "this" {
-	name = local.example
 	port = 8080
 	protocol = "HTTP"
 	target_type = "ip"
 	vpc_id = resource.aws_vpc.this.id
 
-	depends_on = [resource.aws_alb.this]
+	depends_on = [resource.aws_lb.this]
 }
-resource "aws_alb_listener" "this" {
-	load_balancer_arn = resource.aws_alb.this.arn
+resource "aws_lb_listener" "this" {
+	load_balancer_arn = resource.aws_lb.this.arn
 	port = 80
 	protocol = "HTTP"
 
@@ -201,7 +198,7 @@ resource "aws_alb_listener" "this" {
 
 # * Output the URL of our Application Load Balancer so that we can connect to
 # * it once we get our ECS Service up and running.
-output "alb_url" { value = "http://${resource.aws_alb.this.dns_name}" }
+output "alb_url" { value = "http://${resource.aws_lb.this.dns_name}" }
 
 # * Step 5 - Create our ECS Cluster that our future ECS Service will run inside of.
 resource "aws_ecs_cluster" "this" { name = "${local.example}-cluster" }
