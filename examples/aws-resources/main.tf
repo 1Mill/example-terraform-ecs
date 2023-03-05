@@ -202,3 +202,21 @@ resource "aws_alb_listener" "this" {
 # * Output the URL of our Application Load Balancer so that we can connect to
 # * it once we get our ECS Service up and running.
 output "alb_url" { value = "http://${resource.aws_alb.this.dns_name}" }
+
+# * Step 5 - Create our AWS ECS Task Definition which tells AWS ECS how to
+# * run our Docker Image that was created previously.
+data "aws_iam_role" "ecs_task_execution_role" { name = "ecsTaskExecutionRole" }
+resource "aws_ecs_task_definition" "this" {
+	container_definitions = jsonencode([{
+		essential: true,
+		image: resource.docker_registry_image.this.name,
+		name: "hello-world-container",
+		portMappings = [{ containerPort = 3000 }],
+	}])
+	cpu = 256
+	execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
+	family = "family-of-${local.example}-tasks"
+	memory = 512
+	network_mode = "awsvpc"
+	requires_compatibilities = ["FARGATE"]
+}
