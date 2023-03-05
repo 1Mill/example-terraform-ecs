@@ -1,3 +1,4 @@
+# * Part 1 - Setup
 locals { example = "github-1mill-example-terraform-ecs-examples-aws-resources" }
 
 provider "aws" {
@@ -21,11 +22,9 @@ provider "docker" {
 	}
 }
 
+# * Part 2 - Building and pushing our code
 # * Create an ECR Repository: later we will push our Docker Image to this Repository
-resource "aws_ecr_repository" "this" {
-	image_tag_mutability = "MUTABLE"
-	name = local.example
-}
+resource "aws_ecr_repository" "this" { name = local.example }
 
 # * Build our Docker Image that generates a new tag every 5 minutes
 resource "time_rotating" "this" { rotation_minutes = 5 }
