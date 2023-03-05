@@ -22,7 +22,7 @@ provider "docker" {
 	}
 }
 
-# * Part 2 - Building and pushing our code
+# * Part 2 - Building and pushing docker image
 # * Create an ECR Repository: later we will push our Docker Image to this Repository
 resource "aws_ecr_repository" "this" { name = local.example }
 
@@ -40,3 +40,57 @@ resource "docker_image" "this" {
 
 # * Push our Image to our Repository
 resource "docker_registry_image" "this" { name = resource.docker_image.this.name }
+
+# * Part 3 - Setting up our network
+# * Create an AWS Virtual Private Cloud (VPC)
+resource "aws_vpc" "this" { cidr_block = "10.0.0.0/16" }
+
+# * Permit resources that we will create later to make and recieve connections to external websites
+resource "aws_security_group" "http" {
+	description = "Permit incoming HTTP traffic"
+	name = "http"
+	vpc_id = resource.aws_vpc.this.id
+
+	ingress {
+		cidr_blocks = ["0.0.0.0/0"]
+		from_port = 80
+		protocol = "TCP"
+		to_port = 80
+	}
+}
+resource "aws_security_group" "https" {
+	description = "Permit incoming HTTPS traffic"
+	name = "https"
+	vpc_id = resource.aws_vpc.this.id
+
+	ingress {
+		cidr_blocks = ["0.0.0.0/0"]
+		from_port = 443
+		protocol = "TCP"
+		to_port = 443
+	}
+}
+resource "aws_security_group" "egress_all" {
+	description = "Permit all outgoing traffic"
+	name = "egress-all"
+	vpc_id = resource.aws_vpc.this.id
+
+	egress {
+		cidr_blocks = ["0.0.0.0/0"]
+		from_port = 0
+		protocol = "-1"
+		to_port = 0
+	}
+}
+resource "aws_security_group" "ingress_api" {
+	description = "Permit some incoming traffic"
+	name = "ingress-node-express"
+	vpc_id = resource.aws_vpc.this.id
+
+	ingress {
+		cidr_blocks = ["0.0.0.0/0"]
+		from_port = 8080
+		protocol = "TCP"
+		to_port = 8080
+	}
+}
