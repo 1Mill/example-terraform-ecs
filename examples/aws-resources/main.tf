@@ -4,9 +4,7 @@ provider "aws" {
 	region = "ca-central-1"
 
 	default_tags {
-		tags = {
-			example = local.example
-		}
+		tags = { example = local.example }
 	}
 }
 
@@ -41,6 +39,4 @@ resource "docker_image" "this" {
 }
 
 # * Push our Docker image to our AWS ECR
-resource "docker_registry_image" "this" {
-	name = resource.docker_image.this.name
-}
+resource "docker_registry_image" "this" { name = resource.docker_image.this.name }
