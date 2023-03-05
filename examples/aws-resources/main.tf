@@ -203,7 +203,14 @@ resource "aws_alb_listener" "this" {
 # * it once we get our ECS Service up and running.
 output "alb_url" { value = "http://${resource.aws_alb.this.dns_name}" }
 
-# * Step 5 - Create our AWS ECS Task Definition which tells AWS ECS how to
+# * Step 5 - Create our ECS Cluster that our future ECS Service will run inside of.
+resource "aws_ecs_cluster" "this" { name = "${local.example}-cluster" }
+resource "aws_ecs_cluster_capacity_providers" "this" {
+	capacity_providers = ["FARGATE"]
+	cluster_name = resource.aws_ecs_cluster.this.name
+}
+
+# * Step 6 - Create our AWS ECS Task Definition which tells AWS ECS how to
 # * run our Docker Image that was created previously.
 data "aws_iam_role" "ecs_task_execution_role" { name = "ecsTaskExecutionRole" }
 resource "aws_ecs_task_definition" "this" {
