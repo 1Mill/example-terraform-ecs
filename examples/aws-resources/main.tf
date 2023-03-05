@@ -94,3 +94,6 @@ resource "aws_security_group" "ingress_api" {
 		to_port = 8080
 	}
 }
+
+# * Available AWS Availability Zones that we will route our connections through
+data "aws_availability_zones" "available" { state = "available" }
