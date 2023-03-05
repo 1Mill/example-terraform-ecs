@@ -136,3 +136,27 @@ resource "aws_nat_gateway" "this" {
 
 	depends_on = [resource.aws_internet_gateway.this]
 }
+
+# * Create Private Subnet on our VPC. In the future, this is the private
+# * and isolated sandbox we will run our ECS Service inside of. Routing
+# * any internet facing requests through our Public Subnet.
+resource "aws_route_table" "private" { vpc_id = resource.aws_vpc.this.id }
+resource "aws_route" "private" {
+	destination_cidr_block = "0.0.0.0/0"
+	nat_gateway_id = resource.aws_nat_gateway.this.id # Connect to NAT Gateway, not Internet Gateway
+	route_table_id = resource.aws_route_table.private.id
+}
+resource "aws_subnet" "private" {
+	count = 2
+
+	availability_zone = data.aws_availability_zones.available.names[count.index]
+	cidr_block = cidrsubnet(resource.aws_vpc.this.cidr_block, 8, count.index + length(resource.aws_subnet.public)) # Avoid conflicts with Public Subnets
+	vpc_id = resource.aws_vpc.this.id
+}
+resource "aws_route_table_association" "private" {
+	# https://github.com/hashicorp/terraform/issues/22476#issuecomment-547689853
+	for_each = { for k, v in resource.aws_subnet.private : k => v.id }
+
+	route_table_id = resource.aws_route_table.public.id
+	subnet_id = each.value
+}
