@@ -19,9 +19,7 @@ function cli() {
 	fi
 
 	AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-	AWS_REGION=$AWS_REGION \
 	AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-	GITHUB_TOKEN=$GITHUB_TOKEN \
 	COMMAND=$command \
 	DIR=$project_root \
 	docker compose \
