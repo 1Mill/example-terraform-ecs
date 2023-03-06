@@ -25,6 +25,21 @@ provider "docker" {
 # * Part 2 - Building and pushing docker image
 # * Create an ECR Repository: later we will push our Docker Image to this Repository
 resource "aws_ecr_repository" "this" { name = local.example }
+resource "aws_ecr_lifecycle_policy" "this" {
+	repository = resource.aws_ecr_repository.this.name
+	policy = jsonencode({
+		rules = [{
+			action = { type = "expire" }
+			description = "Delete all images except a handful of the newest images"
+			rulePriority = 1
+			selection = {
+				countNumber = 3
+				countType = "imageCountMoreThan"
+				tagStatus = "any"
+			}
+		}]
+	})
+}
 
 # * Build our Docker Image that generates a new tag every 5 minutes
 resource "docker_image" "this" {
