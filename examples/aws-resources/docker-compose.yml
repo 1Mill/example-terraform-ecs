@@ -4,6 +4,7 @@ services:
   app:
     build: ./
     environment:
+      MY_INPUT_ENV_VAR: dev-modified-env-var
       NODE_ENV: development
     ports:
       - 8080:8080
