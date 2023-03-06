@@ -28,7 +28,10 @@ provider "docker" {
 
 # * Part 2 - Build and push our Docker Image.
 # * Create an ECR Repository that we will push our Docker Image to later.
-resource "aws_ecr_repository" "this" { name = local.example }
+resource "aws_ecr_repository" "this" {
+	force_delete = true # Delete the repository even if it contains images
+	name = local.example
+}
 
 # * Give our Repository a policy to delete old Images to keep storage costs down.
 resource "aws_ecr_lifecycle_policy" "this" {
