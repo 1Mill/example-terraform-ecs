@@ -1,4 +1,4 @@
-# * Part 1 - Setup
+# * Part 1 - Setup.
 locals {
 	container_name = "hello-world-container"
 	container_port = 8080 # ! Must be same port from our Dockerfile that we EXPOSE
@@ -13,7 +13,7 @@ provider "aws" {
 	}
 }
 
-# * Give Docker permission to push images to AWS ECR
+# * Give Docker permission to pusher Docker Images to AWS.
 data "aws_caller_identity" "this" {}
 data "aws_ecr_authorization_token" "this" {}
 data "aws_region" "this" {}
@@ -26,9 +26,11 @@ provider "docker" {
 	}
 }
 
-# * Part 2 - Building and pushing docker image
-# * Create an ECR Repository: later we will push our Docker Image to this Repository
+# * Part 2 - Build and push our Docker Image.
+# * Create an ECR Repository that we will push our Docker Image to later.
 resource "aws_ecr_repository" "this" { name = local.example }
+
+# * Give our Repository a policy to delete old Images to keep storage costs down.
 resource "aws_ecr_lifecycle_policy" "this" {
 	repository = resource.aws_ecr_repository.this.name
 	policy = jsonencode({
@@ -45,7 +47,8 @@ resource "aws_ecr_lifecycle_policy" "this" {
 	})
 }
 
-# * Build our Docker Image that generates a new tag every 5 minutes
+# * Build our Image locally with the appropriate name to push our Image
+# * to our Repository in AWS.
 resource "docker_image" "this" {
 	# Generate an image name that Docker will publish to our ECR instance like:
 	# 123456789.dkr.ecr.ca-central-1.amazonaws.com/abcdefghijk:2023-03-21T12-34-56
@@ -56,17 +59,18 @@ resource "docker_image" "this" {
 	build { context = "." }
 }
 
-# * Push our Image to our Repository
+# * Push our Image to our Repository.
 resource "docker_registry_image" "this" {
 	keep_remotely = true # Do not delete the old image when a new image is built
 	name = resource.docker_image.this.name
 }
 
-# * Part 3 - Setting up our networks
-# * Create an AWS Virtual Private Cloud (VPC)
+# * Part 3 - Setting up our networks to accept and make requests to the internet.
+# * Create an AWS Virtual Private Cloud (VPC).
 resource "aws_vpc" "this" { cidr_block = "10.0.0.0/16" }
 
-# * Permit resources that we will create later to make and recieve connections to external websites
+# * Create Security Groups that will allow our future resources to make and receive
+# * requests from the internet (e.g. people can visit our hello world application).
 resource "aws_security_group" "http" {
 	description = "Permit incoming HTTP traffic"
 	name = "http"
@@ -116,15 +120,16 @@ resource "aws_security_group" "ingress_api" {
 	}
 }
 
-# * Available AWS Availability Zones that we will route our connections through.
+# * AWS requires us to use multiple Availability Zones and we only want to use
+# * ones the are up and running so we find those ones here.
 data "aws_availability_zones" "available" { state = "available" }
 
-# * Create an Internet Gateway so that resources running inside our VPC can
-# * connect to the internet.
+# * Create an Internet Gateway so that future resources running inside our VPC
+# * can connect to the interent.
 resource "aws_internet_gateway" "this" { vpc_id = resource.aws_vpc.this.id }
 
-# * Create public subnetworks (Public Subnet) so that resources inside our
-# * VPC can use these Public Subnets to fetch data from the internet.
+# * Create public subnetworks (Public Subnets) that are exposed to the interent
+# * so that we can make and take requests.
 resource "aws_route_table" "public" { vpc_id = resource.aws_vpc.this.id }
 resource "aws_route" "public" {
 	destination_cidr_block = "0.0.0.0/0"
@@ -146,10 +151,10 @@ resource "aws_route_table_association" "public" {
 	subnet_id = each.value
 }
 
-# * Eventually we will make a private subnetwork (Private Subnet) that will
-# * need to connect to external websites. To do this, we must create a NAT
-# * Gateway that will route external website requests from our Private
-# * Subnet through our Public Subnet.
+# * Eventually we will make private subnetworks (Private Subnets) that will
+# * need to connect to external websites on the internet. To do this, we must
+# * create a NAT Gateway that will route those requests from our Private Subnet
+# * through our Public Subnets to actually reach those external websites.
 resource "aws_eip" "this" { vpc = true }
 resource "aws_nat_gateway" "this" {
 	allocation_id = resource.aws_eip.this.id
@@ -158,9 +163,10 @@ resource "aws_nat_gateway" "this" {
 	depends_on = [resource.aws_internet_gateway.this]
 }
 
-# * Create Private Subnet on our VPC. In the future, this is the private
-# * and isolated sandbox we will run our ECS Service inside of. Routing
-# * any internet facing requests through our Public Subnet.
+# * Create Private Subnets on our VPC. This acts like an isolated sandbox
+# * that we will run our future ECS Service inside of. Any requests to and
+# * from the broader internet will be filtered throught our Public Subnets
+# * and the NAT Gateway.
 resource "aws_route_table" "private" { vpc_id = resource.aws_vpc.this.id }
 resource "aws_route" "private" {
 	destination_cidr_block = "0.0.0.0/0"
@@ -182,9 +188,10 @@ resource "aws_route_table_association" "private" {
 	subnet_id = each.value
 }
 
-# * Step 4 - Setting up our application load balancers to manage incoming traffic.
-# * Create an AWS Application Load Balancer that accepts HTTP requests (on port 80)
-# * and forwards those requests to port 8080 on the VPC where we will run our container.
+# * Step 4 - Setting up our Application Load Balancers to manage incoming internet traffic.
+# * Create an AWS Application Load Balancer that accepts HTTP requests (on port 80) and
+# * forwards those requests to port 8080 (our container port) on the VPC where we will
+# * eventually run our container.
 resource "aws_lb" "this" {
 	load_balancer_type = "application"
 
@@ -217,15 +224,15 @@ resource "aws_lb_listener" "this" {
 	}
 }
 
-# * Step 5 - Create our ECS Cluster that our future ECS Service will run inside of.
+# * Step 5 - Create our ECS Cluster that our ECS Service will run inside of.
 resource "aws_ecs_cluster" "this" { name = "${local.example}-cluster" }
 resource "aws_ecs_cluster_capacity_providers" "this" {
 	capacity_providers = ["FARGATE"]
 	cluster_name = resource.aws_ecs_cluster.this.name
 }
 
-# * Step 6 - Create our AWS ECS Task Definition which tells AWS ECS how to
-# * run our Docker Image that was created previously.
+# * Step 6 - Create our AWS ECS Task Definition which tells ECS how to run our
+# * container (from our Docker Image).
 data "aws_iam_role" "ecs_task_execution_role" { name = "ecsTaskExecutionRole" }
 resource "aws_ecs_task_definition" "this" {
 	container_definitions = jsonencode([{
@@ -272,6 +279,7 @@ resource "aws_ecs_service" "this" {
 	}
 }
 
+# * Step 8 - See our application working.
 # * Output the URL of our Application Load Balancer so that we can connect to
-# * it once we get our ECS Service up and running.
+# * our application running inside  ECS once it is up and running.
 output "lb_url" { value = "http://${resource.aws_lb.this.dns_name}" }
