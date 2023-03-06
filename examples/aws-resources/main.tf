@@ -225,9 +225,12 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
 data "aws_iam_role" "ecs_task_execution_role" { name = "ecsTaskExecutionRole" }
 resource "aws_ecs_task_definition" "this" {
 	container_definitions = jsonencode([{
-		essential: true,
-		image: resource.docker_registry_image.this.name,
-		name: "hello-world-container",
+		environment: [
+			{ name = "MY_INPUT_ENV_VAR", value = "terraform-modified-env-var" }
+		],
+		essential = true,
+		image = resource.docker_registry_image.this.name,
+		name = "hello-world-container",
 		portMappings = [{ containerPort = 8080 }],
 	}])
 	cpu = 256
