@@ -1,7 +1,7 @@
 # * Part 1 - Setup
 locals {
 	container_name = "hello-world-container"
-	container_port = 8080
+	container_port = 8080 # ! Must be same port from our Dockerfile that we EXPOSE
 	example = "example-terraform-ecs"
 }
 
