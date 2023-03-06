@@ -1,5 +1,9 @@
 # * Part 1 - Setup
-locals { example = "example-terraform-ecs" }
+locals {
+	container_name = "hello-world-container"
+	container_port = 8080
+	example = "example-terraform-ecs"
+}
 
 provider "aws" {
 	region = "ca-central-1"
@@ -106,9 +110,9 @@ resource "aws_security_group" "ingress_api" {
 
 	ingress {
 		cidr_blocks = ["0.0.0.0/0"]
-		from_port = 8080
+		from_port = local.container_port
 		protocol = "TCP"
-		to_port = 8080
+		to_port = local.container_port
 	}
 }
 
@@ -179,8 +183,8 @@ resource "aws_route_table_association" "private" {
 }
 
 # * Step 4 - Setting up our application load balancers to manage incoming traffic.
-# * Create an AWS Application Load Balancer that accepts HTTP requests (on
-# * port 80) and directs those requests to port 8080 on the VPC.
+# * Create an AWS Application Load Balancer that accepts HTTP requests (on port 80)
+# * and forwards those requests to port 8080 on the VPC where we will run our container.
 resource "aws_lb" "this" {
 	load_balancer_type = "application"
 
@@ -195,7 +199,7 @@ resource "aws_lb" "this" {
 	subnets = resource.aws_subnet.public[*].id
 }
 resource "aws_lb_target_group" "this" {
-	port = 8080
+	port = local.container_port
 	protocol = "HTTP"
 	target_type = "ip"
 	vpc_id = resource.aws_vpc.this.id
@@ -230,8 +234,8 @@ resource "aws_ecs_task_definition" "this" {
 		],
 		essential = true,
 		image = resource.docker_registry_image.this.name,
-		name = "hello-world-container",
-		portMappings = [{ containerPort = 8080 }],
+		name = local.container_name,
+		portMappings = [{ containerPort = local.container_port }],
 	}])
 	cpu = 256
 	execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
@@ -254,8 +258,8 @@ resource "aws_ecs_service" "this" {
 	}
 
 	load_balancer {
-		container_name = "hello-world-container"
-		container_port = 8080
+		container_name = local.container_name
+		container_port = local.container_port
 		target_group_arn = resource.aws_lb_target_group.this.arn
 	}
 
