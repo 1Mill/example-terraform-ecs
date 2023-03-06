@@ -27,19 +27,21 @@ provider "docker" {
 resource "aws_ecr_repository" "this" { name = local.example }
 
 # * Build our Docker Image that generates a new tag every 5 minutes
-resource "time_rotating" "this" { rotation_minutes = 5 }
 resource "docker_image" "this" {
 	# Generate an image name that Docker will publish to our ECR instance like:
 	# 123456789.dkr.ecr.ca-central-1.amazonaws.com/abcdefghijk:2023-03-21T12-34-56
 	# {{123456789.dkr.ecr.ca-central-1.amazonaws.com}}/{{abcdefghijk}}:{{2023-03-21T12-34-56}}
 	# {{%v}}/{{%v}}:{{%v}}
-	name = format("%v/%v:%v", local.ecr_address, resource.aws_ecr_repository.this.id, formatdate("YYYY-MM-DD'T'hh-mm-ss", resource.time_rotating.this.id))
+	name = format("%v/%v:%v", local.ecr_address, resource.aws_ecr_repository.this.id, formatdate("YYYY-MM-DD'T'hh-mm-ss", timestamp()))
 
 	build { context = "." }
 }
 
 # * Push our Image to our Repository
-resource "docker_registry_image" "this" { name = resource.docker_image.this.name }
+resource "docker_registry_image" "this" {
+	keep_remotely = true # Do not delete the old image when a new image is built
+	name = resource.docker_image.this.name
+}
 
 # * Part 3 - Setting up our networks
 # * Create an AWS Virtual Private Cloud (VPC)
