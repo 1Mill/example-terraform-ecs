@@ -112,6 +112,8 @@ module "alb" {
 
 	http_tcp_listeners = [
 		{
+			# ! Defaults to "forward" action for "target group"
+			# ! at index = 0 in "the target_groups" input below.
 			port               = 80
 			protocol           = "HTTP"
 			target_group_index = 0
