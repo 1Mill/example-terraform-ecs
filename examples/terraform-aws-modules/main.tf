@@ -198,8 +198,7 @@ resource "aws_ecs_service" "this" {
 	}
 }
 
-# TODO: Update Step number
-# * Step XXX - See our application working.
+# * Step 8 - See our application working.
 # * Output the URL of our Application Load Balancer so that we can connect to
 # * our application running inside  ECS once it is up and running.
 output "lb_url" { value = "http://${module.alb.lb_dns_name}" }
