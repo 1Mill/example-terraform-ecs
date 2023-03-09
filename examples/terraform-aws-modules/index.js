@@ -4,7 +4,7 @@ const app = express()
 
 app.get('/', (_req, res) => {
 	res.send(`
-		Hello World!
+		This "Hello world!" is powered by Terraform AWS Modules!
 		The NODE_ENV is ${process.env.NODE_ENV}.
 		Datetime now: ${new Date().toISOString()}.
 		The MY_INPUT_ENV_VAR is ${process.env.MY_INPUT_ENV_VAR}.
