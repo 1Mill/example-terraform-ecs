@@ -93,14 +93,6 @@ module "alb" {
 			description = "HTTP web traffic"
 			cidr_blocks = ["0.0.0.0/0"]
 		}
-		ingress_hello_world = {
-			type        = "ingress"
-			from_port   = local.container_port
-			to_port     = local.container_port
-			protocol    = "TCP"
-			description = "Hello World Application"
-			cidr_blocks = ["0.0.0.0/0"]
-		}
 		egress_all = {
 			type        = "egress"
 			from_port   = 0
