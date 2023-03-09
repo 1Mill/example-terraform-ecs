@@ -1,3 +1,4 @@
+# ! Reference: https://section411.com/2019/07/hello-world/
 # * Part 1 - Setup.
 locals {
 	container_name = "hello-world-container"
