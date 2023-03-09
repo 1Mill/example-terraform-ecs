@@ -26,6 +26,7 @@ provider "docker" {
 	}
 }
 
+# * Part 2 - Build and push Docker image.
 module "ecr" {
 	source  = "terraform-aws-modules/ecr/aws"
 	version = "~> 1.6.0"
