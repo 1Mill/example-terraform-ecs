@@ -58,7 +58,7 @@ resource "docker_image" "this" {
 	# 123456789.dkr.ecr.ca-central-1.amazonaws.com/abcdefghijk:2023-03-21T12-34-56
 	# {{123456789.dkr.ecr.ca-central-1.amazonaws.com}}/{{abcdefghijk}}:{{2023-03-21T12-34-56}}
 	# {{%v}}/{{%v}}:{{%v}}
-	name = format("%v/%v:%v", local.ecr_address, resource.aws_ecr_repository.this.id, formatdate("YYYY-MM-DD'T'hh-mm-ss", timestamp()))
+	name = format("%v/%v:%v", local.ecr_address, resource.aws_ecr_repository.this.id, 1234)
 
 	build { context = "." }
 }
@@ -283,10 +283,14 @@ resource "aws_ecs_service" "this" {
 	}
 }
 
+data "aws_arn" "this" {
+	arn = resource.aws_ecs_service.this.id
+}
+
 resource "aws_appautoscaling_target" "ecs_target" {
 	max_capacity       = 4
 	min_capacity       = 1
-	resource_id        = "service/${resource.aws_ecs_cluster.this.name}/${resource.aws_ecs_service.this.name}"
+	resource_id        = data.aws_arn.this.resource
 	scalable_dimension = "ecs:service:DesiredCount"
 	service_namespace  = "ecs"
 }
