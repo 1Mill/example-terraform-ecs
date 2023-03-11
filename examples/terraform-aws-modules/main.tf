@@ -148,7 +148,9 @@ module "ecs" {
 }
 
 # * Step 6 - Create our ECS Task Definition
+# TODO: Do not assume role exists, instead, create it with the correct permissions
 data "aws_iam_role" "ecs_task_execution_role" { name = "ecsTaskExecutionRole" }
+# TODO: ---
 resource "aws_ecs_task_definition" "this" {
 	container_definitions = jsonencode([{
 		environment: [
