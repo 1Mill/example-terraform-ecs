@@ -283,6 +283,73 @@ resource "aws_ecs_service" "this" {
 	}
 }
 
+data "aws_arn" "this" {
+	arn = resource.aws_ecs_service.this.id
+}
+
+resource "aws_appautoscaling_target" "ecs_target" {
+	max_capacity       = 4
+	min_capacity       = 1
+	resource_id        = data.aws_arn.this.resource
+	scalable_dimension = "ecs:service:DesiredCount"
+	service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
+	name               = "scale-up-policy-cpu"
+	policy_type        = "TargetTrackingScaling"
+	resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+	scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+	service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+	target_tracking_scaling_policy_configuration {
+		target_value = 70
+		scale_in_cooldown = 300
+		scale_out_cooldown = 100
+
+		predefined_metric_specification {
+			predefined_metric_type = "ECSServiceAverageCPUUtilization"
+		}
+	}
+}
+
+resource "aws_appautoscaling_policy" "ecs_policy_memory" {
+	name               = "scale-up-policy-memory"
+	policy_type        = "TargetTrackingScaling"
+	resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+	scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+	service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+	target_tracking_scaling_policy_configuration {
+		target_value = 70
+		scale_in_cooldown = 300
+		scale_out_cooldown = 100
+
+		predefined_metric_specification {
+			predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+		}
+	}
+}
+
+resource "aws_appautoscaling_policy" "ecs_policy_alb" {
+	name               = "scale-up-policy-alb"
+	policy_type        = "TargetTrackingScaling"
+	resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+	scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+	service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+
+	target_tracking_scaling_policy_configuration {
+		target_value = 300
+		scale_in_cooldown = 300
+		scale_out_cooldown = 100
+
+		predefined_metric_specification {
+			predefined_metric_type = "ALBRequestCountPerTarget"
+			resource_label = "${resource.aws_lb.this.arn_suffix}/${resource.aws_lb_target_group.this.arn_suffix}"
+		}
+	}
+}
+
 # * Step 8 - See our application working.
 # * Output the URL of our Application Load Balancer so that we can connect to
 # * our application running inside  ECS once it is up and running.
