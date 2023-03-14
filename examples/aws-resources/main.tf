@@ -309,6 +309,7 @@ resource "aws_appautoscaling_target" "ecs_target" {
 	scalable_dimension = "ecs:service:DesiredCount"
 	service_namespace  = "ecs"
 }
+
 resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
 	name               = "scale-up-policy-cpu"
 	policy_type        = "TargetTrackingScaling"
@@ -326,6 +327,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
 		}
 	}
 }
+
 resource "aws_appautoscaling_policy" "ecs_policy_memory" {
 	name               = "scale-up-policy-memory"
 	policy_type        = "TargetTrackingScaling"
@@ -343,6 +345,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_memory" {
 		}
 	}
 }
+
 resource "aws_appautoscaling_policy" "ecs_policy_alb" {
 	name               = "scale-up-policy-alb"
 	policy_type        = "TargetTrackingScaling"
@@ -360,6 +363,33 @@ resource "aws_appautoscaling_policy" "ecs_policy_alb" {
 			resource_label = "${resource.aws_lb.this.arn_suffix}/${resource.aws_lb_target_group.this.arn_suffix}"
 		}
 	}
+}
+
+resource "aws_appautoscaling_scheduled_action" "scale_service_out" {
+  name               = "scale_service_out"
+  service_namespace  = resource.aws_appautoscaling_target.ecs_target.service_namespace
+  resource_id        = resource.aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = resource.aws_appautoscaling_target.ecs_target.scalable_dimension
+  schedule           = "cron(0 6 * * ? *)"
+	timezone           = ""
+
+  scalable_target_action {
+    min_capacity = 2
+    max_capacity = 10
+  }
+}
+
+resource "aws_appautoscaling_scheduled_action" "scale_service_in" {
+  name               = "scale_service_in"
+  service_namespace  = resource.aws_appautoscaling_target.ecs_target.service_namespace
+  resource_id        = resource.aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = resource.aws_appautoscaling_target.ecs_target.scalable_dimension
+  schedule           = "cron(0 18 * * ? *)"
+
+  scalable_target_action {
+    min_capacity = 0
+    max_capacity = 1
+  }
 }
 
 # * Step 8 - See our application working.
