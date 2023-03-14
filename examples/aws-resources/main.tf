@@ -366,30 +366,29 @@ resource "aws_appautoscaling_policy" "ecs_policy_alb" {
 }
 
 resource "aws_appautoscaling_scheduled_action" "scale_service_out" {
-  name               = "scale_service_out"
-  service_namespace  = resource.aws_appautoscaling_target.ecs_target.service_namespace
-  resource_id        = resource.aws_appautoscaling_target.ecs_target.resource_id
-  scalable_dimension = resource.aws_appautoscaling_target.ecs_target.scalable_dimension
-  schedule           = "cron(0 6 * * ? *)"
-	timezone           = ""
+	name               = "scale_service_out"
+	service_namespace  = resource.aws_appautoscaling_target.ecs_target.service_namespace
+	resource_id        = resource.aws_appautoscaling_target.ecs_target.resource_id
+	scalable_dimension = resource.aws_appautoscaling_target.ecs_target.scalable_dimension
+	schedule           = "cron(0 6 * * ? *)"
 
-  scalable_target_action {
-    min_capacity = 2
-    max_capacity = 10
-  }
+	scalable_target_action {
+		min_capacity = 2
+		max_capacity = 10
+	}
 }
 
 resource "aws_appautoscaling_scheduled_action" "scale_service_in" {
-  name               = "scale_service_in"
-  service_namespace  = resource.aws_appautoscaling_target.ecs_target.service_namespace
-  resource_id        = resource.aws_appautoscaling_target.ecs_target.resource_id
-  scalable_dimension = resource.aws_appautoscaling_target.ecs_target.scalable_dimension
-  schedule           = "cron(0 18 * * ? *)"
+	name               = "scale_service_in"
+	service_namespace  = resource.aws_appautoscaling_target.ecs_target.service_namespace
+	resource_id        = resource.aws_appautoscaling_target.ecs_target.resource_id
+	scalable_dimension = resource.aws_appautoscaling_target.ecs_target.scalable_dimension
+	schedule           = "cron(0 18 * * ? *)"
 
-  scalable_target_action {
-    min_capacity = 0
-    max_capacity = 1
-  }
+	scalable_target_action {
+		min_capacity = 0
+		max_capacity = 1
+	}
 }
 
 # * Step 8 - See our application working.
