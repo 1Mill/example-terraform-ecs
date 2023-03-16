@@ -373,8 +373,8 @@ resource "aws_appautoscaling_scheduled_action" "scale_service_out" {
 	schedule           = "cron(0 6 * * ? *)"
 
 	scalable_target_action {
+		max_capacity = 4
 		min_capacity = 2
-		max_capacity = 10
 	}
 }
 
@@ -386,8 +386,8 @@ resource "aws_appautoscaling_scheduled_action" "scale_service_in" {
 	schedule           = "cron(0 18 * * ? *)"
 
 	scalable_target_action {
-		min_capacity = 0
-		max_capacity = 1
+		max_capacity = 2
+		min_capacity = 1
 	}
 }
 
