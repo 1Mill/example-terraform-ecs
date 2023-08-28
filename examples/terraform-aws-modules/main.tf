@@ -73,6 +73,7 @@ module "vpc" {
 	enable_nat_gateway = true # Hide private subnetworks behind NAT Gateway
 	private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
 	public_subnets = ["10.0.101.0/24", "10.0.102.0/24"]
+	single_nat_gateway = true
 }
 
 # * Part 4 - Create application load balancer
