@@ -149,9 +149,24 @@ module "ecs" {
 }
 
 # * Step 6 - Create our ECS Task Definition
-# TODO: Do not assume role exists, instead, create it with the correct permissions
-data "aws_iam_role" "ecs_task_execution_role" { name = "ecsTaskExecutionRole" }
-# TODO: ---
+data "aws_iam_policy_document" "this" {
+	version = "2012-10-17"
+
+	statement {
+		actions = ["sts:AssumeRole"]
+		effect = "Allow"
+
+		principals {
+			identifiers = ["ecs-tasks.amazonaws.com"]
+			type = "Service"
+		}
+	}
+}
+resource "aws_iam_role" "this" { assume_role_policy = data.aws_iam_policy_document.this.json }
+resource "aws_iam_role_policy_attachment" "this" {
+	policy_arn  = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+	role = resource.aws_iam_role.this.name
+}
 resource "aws_ecs_task_definition" "this" {
 	container_definitions = jsonencode([{
 		environment: [
@@ -163,7 +178,7 @@ resource "aws_ecs_task_definition" "this" {
 		portMappings = [{ containerPort = local.container_port }],
 	}])
 	cpu = 256
-	execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
+	execution_role_arn = resource.aws_iam_role.this.arn
 	family = "family-of-${local.example}-tasks"
 	memory = 512
 	network_mode = "awsvpc"
